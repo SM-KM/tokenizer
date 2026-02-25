@@ -1,0 +1,12 @@
+name: Formatting check, tidy
+concurrency: 
+  group: checks for the pulls
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4

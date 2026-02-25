@@ -1,0 +1,10 @@
+# BasedOnStyle: Google
+# IndentWidth: 4
+AlwaysBreakTemplateDeclarations: Yes
+SpacesBeforeTrailingComments: 1
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Always
+# AllowShortSpecializationsOnASingleLine: true
+ColumnLimit: 80
+
