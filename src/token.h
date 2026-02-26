@@ -42,5 +42,11 @@ const std::string RETURN{"RETURN"};
 const std::string IF{"IF"};
 const std::string ELSE{"ELSE"};
 
+using TokenType = std::string;
+struct Token
+{
+  TokenType type;
+};
+
 } // namespace tkn
 #endif // TOKEN_H
