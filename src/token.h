@@ -2,6 +2,7 @@
 #define TOKEN_H
 
 #include <string>
+#include <unordered_map>
 
 namespace tkn
 {
@@ -48,6 +49,10 @@ struct Token
   TokenType type;
   std::string literal;
 };
+
+static std::unordered_map<std::string, TokenType> keywords{
+    {"fn", FUNCTION},   {"let", LET}, {"true", TRUE}, {"false", FALSE},
+    {"return", RETURN}, {"if", IF},   {"else", ELSE}};
 
 } // namespace tkn
 #endif // TOKEN_H
