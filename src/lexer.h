@@ -1,202 +1,336 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "token.h"
 #include <cctype>
-#include <charconv>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace tkn
 {
 
+enum class TokenType
+{
+  IDENT,
+  INT,
+  FLOAT,
+  ASSIGN,
+  EQ,
+  PLUS,
+  MINUS,
+  ASTERISK,
+  SLASH,
+  LT,
+  GT,
+  LPAREN,
+  RPAREN,
+  LBRACE,
+  RBRACE,
+  ENDOF,
+  ILLEGAL,
+  COUNT
+};
+
+static std::string to_string(tkn::TokenType type)
+{
+  switch (type)
+  {
+  case TokenType::IDENT:
+    return "IDENT";
+  case TokenType::INT:
+    return "INT";
+  case TokenType::FLOAT:
+    return "FLOAT";
+  case TokenType::ASSIGN:
+    return "ASSIGN";
+  case TokenType::EQ:
+    return "EQ";
+  case TokenType::PLUS:
+    return "PLUS";
+  case TokenType::MINUS:
+    return "MINUS";
+  case TokenType::ASTERISK:
+    return "ASTERISK";
+  case TokenType::SLASH:
+    return "SLASH";
+  case TokenType::LT:
+    return "LT";
+  case TokenType::GT:
+    return "GT";
+  case TokenType::LPAREN:
+    return "LPAREN";
+  case TokenType::RPAREN:
+    return "RPAREN";
+  case TokenType::LBRACE:
+    return "LBRACE";
+  case TokenType::RBRACE:
+    return "RBRACE";
+  case TokenType::ENDOF:
+    return "ENDOF";
+  case TokenType::ILLEGAL:
+    return "ILLEGAL";
+  case TokenType::COUNT:
+    return "COUNT";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+struct Token
+{
+  TokenType type;
+  std::string literal;
+};
+
 class Lexer
 {
 public:
-  Lexer(std::string input)
-      : input_{std::move(input)}, ch_{0}, pos_{0}, read_pos_{0}
-  {
-    read_char();
-  };
-
-  ~Lexer() = default;
+  explicit Lexer(std::string input) noexcept
+      : input_{std::move(input)}, pos_{0} {};
   void operator=(const Lexer &) = delete;
   void operator=(Lexer &&) = delete;
+  ~Lexer() = default;
 
-  void read_char()
+  Token next_token()
   {
-    if (read_pos_ >= input_.size())
-    {
-      ch_ = 0;
-    }
-    else
-    {
-      ch_ = input_[read_pos_];
-    }
-    pos_ = read_pos_;
-    read_pos_++;
-  };
-  void skip_whitespace()
-  {
-    while (ch_ == ' ' || ch_ == '\t' || ch_ == '\n' || ch_ == '\r')
-    {
-      read_char();
-    }
-  };
+    skip_ws();
+    if (pos_ >= input_.size()) return {TokenType::ENDOF, ""};
 
-  [[nodiscard]] char peek_char()
-  {
-    if (read_pos_ >= input_.size())
-    {
-      return 0;
-    }
-    else
-    {
-      return input_[read_pos_];
-    }
-  };
+    State state = State::START;
+    std::string buffer;
 
-  [[nodiscard]] tkn::Token next_token()
-  {
-    tkn::Token tok{};
-    skip_whitespace();
-
-    switch (ch_)
-    {
-    case '=':
-      if (peek_char() == '=')
-      {
-        char ch = ch_;
-        read_char();
-        tok = tkn::Token{tkn::EQ, std::string(1, ch) + std::string(1, ch_)};
-      }
-      else
-      {
-        tok = new_token(tkn::ASSIGN, ch_);
-      }
-      break;
-
-    case ';':
-      tok = new_token(tkn::SEMICOLLON, ch_);
-      break;
-    case '(':
-      tok = new_token(tkn::LPAREN, ch_);
-      break;
-    case ')':
-      tok = new_token(tkn::RPAREN, ch_);
-      break;
-    case '+':
-      tok = new_token(tkn::PLUS, ch_);
-      break;
-    case '{':
-      tok = new_token(tkn::LBRACE, ch_);
-      break;
-    case '}':
-      tok = new_token(tkn::RBRACE, ch_);
-      break;
-    case '-':
-      tok = new_token(tkn::MINUS, ch_);
-      break;
-    case '/':
-      tok = new_token(tkn::SLASH, ch_);
-      break;
-
-    case '*':
-      tok = new_token(tkn::ASTERISK, ch_);
-      break;
-
-    case '<':
-      tok = new_token(tkn::LT, ch_);
-      break;
-    case '>':
-      tok = new_token(tkn::GT, ch_);
-      break;
-
-    case 0:
-      tok.literal = "";
-      tok.type = tkn::ENDOF;
-      break;
-
-    default:
-      if (ch_ == '.')
-      {
-        if (is_digit(peek_char()))
-        {
-          read_number(tok);
-          return tok;
-        }
-      }
-      if (is_letter(ch_))
-      {
-        tok.literal = read_identifier();
-        tok.type = tkn::LookupIdent(tok.literal);
-        return tok;
-      }
-      else if (is_digit(ch_))
-      {
-        read_number(tok);
-        return tok;
-      }
-      else
-      {
-        tok = new_token(tkn::ILLEGAL, ch_);
-      }
-      break;
-    }
-
-    read_char();
-    return tok;
-  };
-
-  [[nodiscard]] std::string read_identifier()
-  {
-    int pos = pos_;
-    while (is_letter(ch_))
-      read_char();
-    return input_.substr(pos, pos_ - pos);
-  };
-
-  void read_number(tkn::Token &tok)
-  {
-    int start_pos = pos_;
-    bool has_dot = false;
     while (true)
     {
-      if (ch_ == '.')
-      {
-        if (has_dot) break;
-        has_dot = true;
-      }
-      else if (!is_digit(ch_))
-      {
+      char ch = current_char();
+      CharType char_type = classify(ch);
+      State next =
+          transitions_[static_cast<int>(state)][static_cast<int>(char_type)];
+      if (next == State::DONE || state == State::DONE || next == State::ERROR)
         break;
-      }
-      read_char();
-    }
-    tok.type = has_dot ? tkn::FLOAT : tkn::INT;
-    tok.literal = input_.substr(start_pos, pos_ - start_pos);
-  };
 
-  [[nodiscard]] bool is_letter(char ch)
-  {
-    return std::isalpha(static_cast<unsigned char>(ch)) || ch == '_';
-  };
-  [[nodiscard]] bool is_digit(char ch) { return '0' <= ch && ch <= '9'; };
-  [[nodiscard]] bool is_float(char ch)
-  {
-    return ('0' <= ch && ch <= '9') || ch == '.';
-  };
-  [[nodiscard]] tkn::Token new_token(tkn::TokenType type, char ch)
-  {
-    return tkn::Token{type, std::string(1, ch)};
+      buffer += ch;
+      state = next;
+      advance();
+    }
+    return make_tokened(state, buffer);
   };
 
 private:
   std::string input_;
-  int pos_;
-  int read_pos_;
-  char ch_;
+  size_t pos_ = 0;
+
+  enum class State
+  {
+    START,
+    IDENT,
+    INT,
+    FLOAT,
+
+    ASSIGN_ST,
+    EQ_ST,
+
+    PLUS_ST,
+    MINUS_ST,
+    ASTERISK_ST,
+    SLASH_ST,
+    LT_ST,
+    GT_ST,
+    LPAREN_ST,
+    RPAREN_ST,
+    LBRACE_ST,
+    RBRACE_ST,
+
+    DONE,
+    ERROR,
+    COUNT
+  };
+
+  enum class CharType
+  {
+    CHAR,
+    NUM,
+    DOT,
+    EQ,
+    PLUS,
+    MINUS,
+    ASTERISK,
+    SLASH,
+    LT,
+    GT,
+    LPAREN,
+    RPAREN,
+    LBRACE,
+    RBRACE,
+    WS,
+    OTHER,
+    END,
+    COUNT
+  };
+
+  static constexpr int n_states = static_cast<size_t>(State::COUNT);
+  static constexpr int n_chartypes = static_cast<size_t>(CharType::COUNT);
+
+  State transitions_[n_states][n_chartypes] = {
+      {State::IDENT, State::INT, State::ERROR, State::ASSIGN_ST, State::PLUS_ST,
+       State::MINUS_ST, State::ASTERISK_ST, State::SLASH_ST, State::LT_ST,
+       State::GT_ST, State::LPAREN_ST, State::RPAREN_ST, State::LBRACE_ST,
+       State::RBRACE_ST, State::START, State::ERROR, State::DONE},
+
+      {State::IDENT, State::IDENT, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::INT, State::FLOAT, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::FLOAT, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::EQ_ST, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
+       State::DONE, State::DONE},
+
+      {State::ERROR, State::ERROR, State::ERROR, State::ERROR, State::ERROR,
+       State::ERROR, State::ERROR, State::ERROR, State::ERROR, State::ERROR,
+       State::ERROR, State::ERROR, State::ERROR, State::ERROR, State::ERROR,
+       State::ERROR, State::ERROR}};
+
+  char current_char() { return pos_ < input_.size() ? input_[pos_] : '\0'; };
+  void advance() { ++pos_; };
+  void skip_ws()
+  {
+    while (std::isspace(current_char()))
+      advance();
+  };
+
+  CharType classify(char ch)
+  {
+    if (std::isalpha(ch)) return CharType::CHAR;
+    if (std::isdigit(ch)) return CharType::NUM;
+    if (ch == '.') return CharType::DOT;
+    if (ch == '=') return CharType::EQ;
+    if (ch == '+') return CharType::PLUS;
+    if (ch == '-') return CharType::MINUS;
+    if (ch == '*') return CharType::ASTERISK;
+    if (ch == '/') return CharType::SLASH;
+    if (ch == '<') return CharType::LT;
+    if (ch == '>') return CharType::GT;
+    if (ch == '(') return CharType::LPAREN;
+    if (ch == ')') return CharType::RPAREN;
+    if (ch == '{') return CharType::LBRACE;
+    if (ch == '}') return CharType::RBRACE;
+    if (std::isspace(ch)) return CharType::WS;
+    if (ch == '\0') return CharType::END;
+    return CharType::OTHER;
+  };
+
+  Token make_tokened(State state, const std::string &literal)
+  {
+    switch (state)
+    {
+    case State::IDENT:
+      return {TokenType::IDENT, literal};
+    case State::INT:
+      return {TokenType::INT, literal};
+    case State::FLOAT:
+      return {TokenType::FLOAT, literal};
+    case State::EQ_ST:
+      if (literal == "=") return {TokenType::ASSIGN, literal};
+      return {TokenType::EQ, literal};
+    case State::DONE:
+      return {TokenType::ILLEGAL, literal};
+    case State::ASSIGN_ST:
+      return {TokenType::ASSIGN, literal};
+    case State::PLUS_ST:
+      return {TokenType::PLUS, literal};
+    case State::MINUS_ST:
+      return {TokenType::MINUS, literal};
+    case State::ASTERISK_ST:
+      return {TokenType::ASTERISK, literal};
+    case State::SLASH_ST:
+      return {TokenType::SLASH, literal};
+    case State::LT_ST:
+      return {TokenType::LT, literal};
+    case State::GT_ST:
+      return {TokenType::GT, literal};
+    case State::LPAREN_ST:
+      return {TokenType::LPAREN, literal};
+    case State::RPAREN_ST:
+      return {TokenType::RPAREN, literal};
+    case State::LBRACE_ST:
+      return {TokenType::LBRACE, literal};
+    case State::RBRACE_ST:
+      return {TokenType::RBRACE, literal};
+      break;
+    }
+  };
 };
 
 } // namespace tkn
