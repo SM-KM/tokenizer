@@ -1,3 +1,5 @@
-int main(int argc, char *argv[])
+#include "repl.h"
+int main()
 {
+  start_repl();
 }

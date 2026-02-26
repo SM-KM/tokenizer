@@ -12,6 +12,10 @@ endif()
 
 set(SOURCES
     ./src/token.h
+    ./src/parser.h
+    ./src/parser.cpp
+    ./src/lexer.h
+    ./src/lexer.cpp
 )
 
 set(ENTRY_POINT
