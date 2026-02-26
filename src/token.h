@@ -9,6 +9,7 @@ namespace tkn
 // consts to identify the tokens - keywords, identifiers,
 // operators
 const std::string ENDOF{"EOF"};
+const std::string ILLEGAL{"ILLEGAL"};
 
 } // namespace tkn
 

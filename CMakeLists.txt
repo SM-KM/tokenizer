@@ -11,6 +11,8 @@ if(DEBUG)
 endif()
 
 set(SOURCES
+    ./src/repl.h
+    ./src/repl.cpp
     ./src/token.h
     ./src/parser.h
     ./src/parser.cpp
