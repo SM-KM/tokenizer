@@ -46,6 +46,7 @@ using TokenType = std::string;
 struct Token
 {
   TokenType type;
+  std::string literal;
 };
 
 } // namespace tkn
