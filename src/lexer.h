@@ -119,14 +119,16 @@ public:
       break;
 
     default:
-      if (is_letter(ch_))
+      if (ch_ == '.')
       {
         if (is_digit(peek_char()))
         {
           read_number(tok);
           return tok;
         }
-
+      }
+      if (is_letter(ch_))
+      {
         tok.literal = read_identifier();
         tok.type = tkn::LookupIdent(tok.literal);
         return tok;
@@ -178,8 +180,7 @@ public:
 
   [[nodiscard]] bool is_letter(char ch)
   {
-    return std::isalpha(static_cast<unsigned char>(ch)) || ch == '_' ||
-           ch == '.';
+    return std::isalpha(static_cast<unsigned char>(ch)) || ch == '_';
   };
   [[nodiscard]] bool is_digit(char ch) { return '0' <= ch && ch <= '9'; };
   [[nodiscard]] bool is_float(char ch)
