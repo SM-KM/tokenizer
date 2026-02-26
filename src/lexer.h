@@ -121,14 +121,19 @@ public:
     default:
       if (is_letter(ch_))
       {
+        if (is_digit(peek_char()))
+        {
+          read_number(tok);
+          return tok;
+        }
+
         tok.literal = read_identifier();
         tok.type = tkn::LookupIdent(tok.literal);
         return tok;
       }
       else if (is_digit(ch_))
       {
-        tok.type = tkn::INT;
-        tok.literal = read_number();
+        read_number(tok);
         return tok;
       }
       else
@@ -150,19 +155,37 @@ public:
     return input_.substr(pos, pos_ - pos);
   };
 
-  [[nodiscard]] std::string read_number()
+  void read_number(tkn::Token &tok)
   {
-    int pos = pos_;
-    while (is_digit(ch_))
+    int start_pos = pos_;
+    bool has_dot = false;
+    while (true)
+    {
+      if (ch_ == '.')
+      {
+        if (has_dot) break;
+        has_dot = true;
+      }
+      else if (!is_digit(ch_))
+      {
+        break;
+      }
       read_char();
-    return input_.substr(pos, pos_ - pos);
+    }
+    tok.type = has_dot ? tkn::FLOAT : tkn::INT;
+    tok.literal = input_.substr(start_pos, pos_ - start_pos);
   };
 
   [[nodiscard]] bool is_letter(char ch)
   {
-    return std::isalpha(static_cast<unsigned char>(ch)) || ch == '_';
+    return std::isalpha(static_cast<unsigned char>(ch)) || ch == '_' ||
+           ch == '.';
   };
   [[nodiscard]] bool is_digit(char ch) { return '0' <= ch && ch <= '9'; };
+  [[nodiscard]] bool is_float(char ch)
+  {
+    return ('0' <= ch && ch <= '9') || ch == '.';
+  };
   [[nodiscard]] tkn::Token new_token(tkn::TokenType type, char ch)
   {
     return tkn::Token{type, std::string(1, ch)};

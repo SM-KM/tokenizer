@@ -14,6 +14,7 @@ const std::string ILLEGAL{"ILLEGAL"};
 
 // Identifies and literals
 const std::string INT{"INT"};
+const std::string FLOAT{"FLOAT"};
 const std::string IDENT{"IDENT"};
 
 // Operators
