@@ -54,5 +54,15 @@ static std::unordered_map<std::string, TokenType> keywords{
     {"fn", FUNCTION},   {"let", LET}, {"true", TRUE}, {"false", FALSE},
     {"return", RETURN}, {"if", IF},   {"else", ELSE}};
 
+static TokenType LookupIdent(std::string ident)
+{
+  auto it = keywords.find(ident);
+  if (it != keywords.end())
+  {
+    return it->second;
+  }
+  return IDENT;
+}
+
 } // namespace tkn
 #endif // TOKEN_H
