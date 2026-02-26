@@ -13,11 +13,8 @@ endif()
 set(SOURCES
     ./src/repl.h
     ./src/repl.cpp
-    ./src/token.h
-    ./src/parser.h
-    ./src/parser.cpp
     ./src/lexer.h
-    ./src/lexer.cpp
+    ./src/token.h
 )
 
 set(ENTRY_POINT

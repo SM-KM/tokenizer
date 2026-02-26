@@ -2,8 +2,11 @@
 #define LEXER_H
 
 #include "token.h"
+#include <cctype>
 #include <charconv>
+#include <iostream>
 #include <string>
+#include <utility>
 
 namespace tkn
 {
@@ -11,7 +14,13 @@ namespace tkn
 class Lexer
 {
 public:
-  Lexer(std::string input) : input_{input} { read_char(); };
+  Lexer(std::string input)
+      : input_{std::move(input)}, ch_{0}, pos_{0}, read_pos_{0}
+  {
+    read_char();
+  };
+
+  ~Lexer() = default;
   void operator=(const Lexer &) = delete;
   void operator=(Lexer &&) = delete;
 
@@ -25,7 +34,6 @@ public:
     {
       ch_ = input_[read_pos_];
     }
-
     pos_ = read_pos_;
     read_pos_++;
   };
@@ -51,7 +59,7 @@ public:
 
   [[nodiscard]] tkn::Token next_token()
   {
-    tkn::Token tok;
+    tkn::Token tok{};
     skip_whitespace();
 
     switch (ch_)
@@ -139,7 +147,7 @@ public:
     int pos = pos_;
     while (is_letter(ch_))
       read_char();
-    return input_.substr(pos, pos_);
+    return input_.substr(pos, pos_ - pos);
   };
 
   [[nodiscard]] std::string read_number()
@@ -147,12 +155,12 @@ public:
     int pos = pos_;
     while (is_digit(ch_))
       read_char();
-    return input_.substr(pos, pos_);
+    return input_.substr(pos, pos_ - pos);
   };
 
   [[nodiscard]] bool is_letter(char ch)
   {
-    return 'a' <= ch && ch <= 'Z' || 'A' <= ch && ch <= 'Z' || ch == '_';
+    return std::isalpha(static_cast<unsigned char>(ch)) || ch == '_';
   };
   [[nodiscard]] bool is_digit(char ch) { return '0' <= ch && ch <= '9'; };
   [[nodiscard]] tkn::Token new_token(tkn::TokenType type, char ch)
