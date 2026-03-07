@@ -14,7 +14,6 @@ set(SOURCES
     ./src/repl.h
     ./src/repl.cpp
     ./src/lexer.h
-    ./src/token.h
 )
 
 set(ENTRY_POINT
