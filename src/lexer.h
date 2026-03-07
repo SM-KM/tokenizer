@@ -1,11 +1,33 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include <array>
 #include <cctype>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <utility>
+
+#define LEXER_TRANSITIONS(X)                                                   \
+  X(START, CHAR, IDENT)                                                        \
+  X(START, NUM, INT)                                                           \
+  X(START, EQ, ASSIGN_ST)                                                      \
+  X(START, PLUS, PLUS_ST)                                                      \
+  X(START, MINUS, MINUS_ST)                                                    \
+  X(START, ASTERISK, ASTERISK_ST)                                              \
+  X(START, SLASH, SLASH_ST)                                                    \
+  X(START, LT, LT_ST)                                                          \
+  X(START, GT, GT_ST)                                                          \
+  X(START, LPAREN, LPAREN_ST)                                                  \
+  X(START, RPAREN, RPAREN_ST)                                                  \
+  X(START, LBRACE, LBRACE_ST)                                                  \
+  X(START, RBRACE, RBRACE_ST)                                                  \
+  X(IDENT, CHAR, IDENT)                                                        \
+  X(IDENT, NUM, IDENT)                                                         \
+  X(INT, NUM, INT)                                                             \
+  X(INT, DOT, FLOAT)                                                           \
+  X(FLOAT, NUM, FLOAT)                                                         \
+  X(ASSIGN_ST, EQ, EQ_ST)
 
 namespace tkn
 {
@@ -170,97 +192,23 @@ private:
 
   static constexpr int n_states = static_cast<size_t>(State::COUNT);
   static constexpr int n_chartypes = static_cast<size_t>(CharType::COUNT);
+  using TransitionTable = std::array<std::array<State, n_chartypes>, n_states>;
 
-  State transitions_[n_states][n_chartypes] = {
-      {State::IDENT, State::INT, State::ERROR, State::ASSIGN_ST, State::PLUS_ST,
-       State::MINUS_ST, State::ASTERISK_ST, State::SLASH_ST, State::LT_ST,
-       State::GT_ST, State::LPAREN_ST, State::RPAREN_ST, State::LBRACE_ST,
-       State::RBRACE_ST, State::START, State::ERROR, State::DONE},
+  inline static constexpr TransitionTable make_table()
+  {
+    TransitionTable table{};
+    for (auto &row : table)
+      row.fill(State::DONE);
 
-      {State::IDENT, State::IDENT, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
+    table[(size_t)State::ERROR].fill(State::ERROR);
 
-      {State::DONE, State::INT, State::FLOAT, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
+#define X(s, c, n) table[(size_t)State::s][(size_t)CharType::c] = State::n;
+    LEXER_TRANSITIONS(X)
+#undef X
 
-      {State::DONE, State::FLOAT, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::EQ_ST, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE, State::DONE, State::DONE, State::DONE,
-       State::DONE, State::DONE},
-
-      {State::ERROR, State::ERROR, State::ERROR, State::ERROR, State::ERROR,
-       State::ERROR, State::ERROR, State::ERROR, State::ERROR, State::ERROR,
-       State::ERROR, State::ERROR, State::ERROR, State::ERROR, State::ERROR,
-       State::ERROR, State::ERROR}};
+    return table;
+  }
+  inline static TransitionTable transitions_ = make_table();
 
   char current_char() { return pos_ < input_.size() ? input_[pos_] : '\0'; };
   void advance() { ++pos_; };
