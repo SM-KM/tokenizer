@@ -23,7 +23,6 @@
   X(START, LBRACE, LBRACE_ST)                                                  \
   X(START, RBRACE, RBRACE_ST)                                                  \
   X(IDENT, CHAR, IDENT)                                                        \
-  X(IDENT, NUM, IDENT)                                                         \
   X(INT, NUM, INT)                                                             \
   X(INT, DOT, FLOAT)                                                           \
   X(FLOAT, NUM, FLOAT)                                                         \
@@ -190,8 +189,8 @@ private:
     COUNT
   };
 
-  static constexpr int n_states = static_cast<size_t>(State::COUNT);
-  static constexpr int n_chartypes = static_cast<size_t>(CharType::COUNT);
+  static constexpr size_t n_states = static_cast<size_t>(State::COUNT);
+  static constexpr size_t n_chartypes = static_cast<size_t>(CharType::COUNT);
   using TransitionTable = std::array<std::array<State, n_chartypes>, n_states>;
 
   inline static constexpr TransitionTable make_table()
@@ -199,7 +198,6 @@ private:
     TransitionTable table{};
     for (auto &row : table)
       row.fill(State::DONE);
-
     table[(size_t)State::ERROR].fill(State::ERROR);
 
 #define X(s, c, n) table[(size_t)State::s][(size_t)CharType::c] = State::n;
