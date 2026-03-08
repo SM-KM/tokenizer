@@ -46,5 +46,6 @@ void run_file(const std::string &path)
       std::cout << "{Type: " << tkn::to_string(tok.type)
                 << ", Literal: " << tok.literal << "}\n";
     }
+    std::cout << "\n";
   }
 }
