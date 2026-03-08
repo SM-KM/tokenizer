@@ -3,7 +3,9 @@
 
 #include <array>
 #include <cctype>
+#include <cstdlib>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -94,7 +96,7 @@ static std::string to_string(tkn::TokenType type)
   case TokenType::COUNT:
     return "COUNT";
   default:
-    return "UNKNOWN";
+    std::abort();
   }
 }
 
@@ -218,7 +220,7 @@ private:
 
   CharType classify(char ch)
   {
-    if (std::isalpha(ch)) return CharType::CHAR;
+    if (std::islower(ch)) return CharType::CHAR;
     if (std::isdigit(ch)) return CharType::NUM;
     if (ch == '.') return CharType::DOT;
     if (ch == '=') return CharType::EQ;
