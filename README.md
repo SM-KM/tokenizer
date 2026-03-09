@@ -3,7 +3,7 @@
 A C++20 lexer/tokenizer built with CMake and Clang.
 
 # DFA
-![DFA](/img.png)
+![DFA](/DFA.png)
 
 ## Explicación DFA
 
