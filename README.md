@@ -70,3 +70,11 @@ The binary reads a source file and prints each token on its own line:
 - `LBRACE`, `RBRACE` - Curly braces
 - `ILLEGAL` - Unrecognized characters
 - `ENDOF` - End of input
+
+## Replit Demo
+
+**Replit demo:**  
+https://replit.com/@a01647287/tokenizer
+
+El proyecto es **público**, pero la versión gratuita de Replit no permite agregar más colaboradores.  
+Por lo tanto, para trabajar en él debes hacer una **copia del proyecto usando la opción _Remix_**, y así ya tendrás todo el código listo para usar.
