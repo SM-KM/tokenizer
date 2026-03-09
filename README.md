@@ -1,3 +1,10 @@
+# Tokenizer
+
+A C++20 lexer/tokenizer built with CMake and Clang.
+
+# DFA
+![DFA](/img.png)
+
 ## Explicación DFA
 
 El siguiente **DFA (autómata finito determinista)** tiene cinco características particulares:
@@ -18,13 +25,6 @@ El siguiente **DFA (autómata finito determinista)** tiene cinco característica
 5. **Reconocimiento de tokens completos**  
    Si tenemos la palabra `"hola"` no cuenta como identificador letra por letra, sino como toda la palabra.  
    Esto pasa igual con los números como `"124"`, por lo cual **no se imprime nada en la consola hasta que se cambie de estado**.
-
-# Tokenizer
-
-A C++20 lexer/tokenizer built with CMake and Clang.
-
-# DFA
-![DFA](/img.png)
 
 ## Overview
 
