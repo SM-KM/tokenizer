@@ -2,6 +2,9 @@
 
 A C++20 lexer/tokenizer built with CMake and Clang.
 
+# DFA
+![DFA][Project 1. Programming a lexical analyzer.png]
+
 ## Overview
 
 This project implements a tokenizer using a finite state machine (DFA).
