@@ -3,7 +3,7 @@
 A C++20 lexer/tokenizer built with CMake and Clang.
 
 # DFA
-![DFA][Project 1. Programming a lexical analyzer.png]
+![DFA](Project 1. Programming a lexical analyzer.png)
 
 ## Overview
 
